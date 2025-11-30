@@ -14,28 +14,28 @@ import { MiningMap } from "@/components/maps/mining-map";
 
 const minaData = {
   id: "1",
-  nombre: "Mina Norte",
-  ubicacion: "Region de Antofagasta",
-  latitud: -23.6509,
-  longitud: -70.3975,
+  nombre: "Mina Poderosa",
+  ubicacion: "Pataz, La Libertad, Peru",
+  latitud: -8.0833,
+  longitud: -77.5833,
   estado: "activa",
   totalLugares: 12,
-  totalFlota: 15,
-  totalTrabajadores: 89,
-  alarmasActivas: 3,
+  totalFlota: 18,
+  totalTrabajadores: 156,
+  alarmasActivas: 2,
 };
 
 const lugaresData = [
-  { id: "1", nombre: "Zona de Carga A", tipo: "zona_carga" },
-  { id: "2", nombre: "Cruce Principal", tipo: "cruce" },
-  { id: "3", nombre: "Taller Mecanico", tipo: "taller" },
-  { id: "4", nombre: "Polvorin", tipo: "zona_restringida" },
+  { id: "1", nombre: "Nivel 2000 - Santa Maria", tipo: "galeria" },
+  { id: "2", nombre: "Rampa Principal", tipo: "rampa" },
+  { id: "3", nombre: "Nivel 1800 - Pataz", tipo: "galeria" },
+  { id: "4", nombre: "Superficie - Planta Maranon", tipo: "superficie" },
 ];
 
 const flotaData = [
-  { id: "1", codigo: "CAM-001", tipo: "Camion", estado: "activo" },
-  { id: "2", codigo: "CAM-002", tipo: "Camion", estado: "activo" },
-  { id: "3", codigo: "EXC-001", tipo: "Excavadora", estado: "mantenimiento" },
+  { id: "1", codigo: "SC-003", tipo: "Scooptram", estado: "activo" },
+  { id: "2", codigo: "SC-005", tipo: "Scooptram", estado: "activo" },
+  { id: "3", codigo: "JB-002", tipo: "Jumbo", estado: "mantenimiento" },
 ];
 
 const alarmasData = [

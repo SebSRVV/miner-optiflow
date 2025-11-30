@@ -42,42 +42,54 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Mock data
+// Minas de Peru
 const minasData = [
   {
     id: "1",
-    nombre: "Mina Norte",
-    ubicacion: "Antofagasta, Chile",
-    latitud: -23.6509,
-    longitud: -70.3975,
+    nombre: "Mina Poderosa",
+    ubicacion: "Pataz, La Libertad, Peru",
+    latitud: -8.0833,
+    longitud: -77.5833,
     estado: "activa",
     lugares: 12,
-    flota: 15,
-    trabajadores: 89,
-    alarmasActivas: 3,
+    flota: 18,
+    trabajadores: 156,
+    alarmasActivas: 2,
   },
   {
     id: "2",
-    nombre: "Mina Sur",
-    ubicacion: "Atacama, Chile",
-    latitud: -27.3668,
-    longitud: -70.3323,
+    nombre: "Mina Yanacocha",
+    ubicacion: "Cajamarca, Peru",
+    latitud: -6.9833,
+    longitud: -78.5333,
     estado: "activa",
-    lugares: 8,
-    flota: 10,
-    trabajadores: 56,
+    lugares: 15,
+    flota: 24,
+    trabajadores: 210,
     alarmasActivas: 1,
   },
   {
     id: "3",
-    nombre: "Mina Central",
-    ubicacion: "Coquimbo, Chile",
-    latitud: -29.9533,
-    longitud: -71.3395,
+    nombre: "Mina Antamina",
+    ubicacion: "Ancash, Peru",
+    latitud: -9.5333,
+    longitud: -77.0667,
+    estado: "activa",
+    lugares: 10,
+    flota: 20,
+    trabajadores: 180,
+    alarmasActivas: 0,
+  },
+  {
+    id: "4",
+    nombre: "Mina Cerro Verde",
+    ubicacion: "Arequipa, Peru",
+    latitud: -16.5333,
+    longitud: -71.6000,
     estado: "mantenimiento",
-    lugares: 6,
-    flota: 5,
-    trabajadores: 23,
+    lugares: 8,
+    flota: 12,
+    trabajadores: 95,
     alarmasActivas: 0,
   },
 ];
@@ -166,7 +178,7 @@ export default function MinasPage() {
                   <Input
                     id="latitud"
                     type="number"
-                    placeholder="-23.6509"
+                    placeholder="-8.0833"
                     className="bg-background border-border/50"
                   />
                 </div>
@@ -175,7 +187,7 @@ export default function MinasPage() {
                   <Input
                     id="longitud"
                     type="number"
-                    placeholder="-70.3975"
+                    placeholder="-77.5833"
                     className="bg-background border-border/50"
                   />
                 </div>

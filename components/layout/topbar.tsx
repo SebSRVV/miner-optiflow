@@ -99,7 +99,7 @@ export function Topbar({ sidebarCollapsed = false }: TopbarProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserData({
-          email: user.email || "usuario@poaborosa.com.pe",
+          email: user.email || "usuario@gmail.com",
           name: user.user_metadata?.nombre || user.user_metadata?.name || user.email?.split("@")[0] || "Operador",
         });
       }
@@ -247,7 +247,7 @@ export function Topbar({ sidebarCollapsed = false }: TopbarProps) {
                 <div className="hidden md:flex flex-col items-start">
                   <span className="text-sm font-medium">{userData?.name || "Operador"}</span>
                   <span className="text-xs text-muted-foreground">
-                    {userData?.email || "usuario@poderosa.com.pe"}
+                    {userData?.email || "usuario@gmail.com"}
                   </span>
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />

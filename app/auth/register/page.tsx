@@ -192,7 +192,7 @@ export default function RegisterPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="usuario@poderosa.com.pe"
+                placeholder="usuario@gmail.com"
                 {...register("email")}
                 className={`bg-background border-border/50 focus:border-primary/50 ${
                   errors.email ? "border-destructive" : ""

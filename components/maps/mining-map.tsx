@@ -49,7 +49,7 @@ interface MiningMapProps {
 
 export function MiningMap({
   title = "Mapa de Operaciones",
-  center = [-23.6509, -70.3975], // Antofagasta, Chile (mining region)
+  center = [-8.0833, -77.5833], // Mina Poderosa, La Libertad, Peru
   zoom = 13,
   markers = [],
   height = "400px",
