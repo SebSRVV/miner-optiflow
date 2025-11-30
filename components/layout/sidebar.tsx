@@ -77,6 +77,11 @@ const navigation = [
     href: "/metrics",
     icon: BarChart3,
   },
+  {
+    name: "Simulacion",
+    href: "/simulacion",
+    icon: TrafficCone,
+  },
 ];
 
 const bottomNavigation = [
@@ -118,10 +123,10 @@ export function Sidebar() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-lg font-bold text-foreground">
-                    EscudoMinero
+                    SafetyOps
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Sistema de Prevención
+                    Mina Poderosa
                   </span>
                 </div>
               </motion.div>

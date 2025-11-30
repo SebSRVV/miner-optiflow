@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -45,30 +45,31 @@ const notifications = [
     id: 1,
     type: "critical",
     title: "Alarma Critica",
-    message: "Velocidad excesiva detectada en Unidad CAM-001",
+    message: "Velocidad excesiva en Scooptram SC-003 - Nivel 2000",
     time: "Hace 2 min",
   },
   {
     id: 2,
     type: "warning",
     title: "Alerta de Proximidad",
-    message: "Vehiculo cerca de zona restringida en Mina Norte",
+    message: "Vehiculos cercanos en Cruce Rampa Principal",
     time: "Hace 15 min",
   },
   {
     id: 3,
     type: "info",
     title: "Dispositivo Conectado",
-    message: "GPS-042 reconectado exitosamente",
+    message: "GPS-042 reconectado en Nivel 1800",
     time: "Hace 1 hora",
   },
 ];
 
-const minas = [
-  { id: "all", name: "Todas las Minas" },
-  { id: "1", name: "Mina Norte" },
-  { id: "2", name: "Mina Sur" },
-  { id: "3", name: "Mina Central" },
+const zonasOperacion = [
+  { id: "all", name: "Todas las Zonas" },
+  { id: "1", name: "Nivel 2000 - Extraccion" },
+  { id: "2", name: "Nivel 1800 - Desarrollo" },
+  { id: "3", name: "Rampa Principal" },
+  { id: "4", name: "Superficie - Planta" },
 ];
 
 interface TopbarProps {
@@ -77,8 +78,22 @@ interface TopbarProps {
 
 export function Topbar({ sidebarCollapsed = false }: TopbarProps) {
   const router = useRouter();
-  const [selectedMina, setSelectedMina] = useState("all");
+  const [selectedZona, setSelectedZona] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [userData, setUserData] = useState<{ email: string; name: string } | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserData({
+          email: user.email || "usuario@minapoderosa.com.pe",
+          name: user.user_metadata?.name || user.email?.split("@")[0] || "Operador",
+        });
+      }
+    };
+    getUser();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -95,15 +110,15 @@ export function Topbar({ sidebarCollapsed = false }: TopbarProps) {
       className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 px-6"
     >
             <div className="flex items-center gap-4">
-                <Select value={selectedMina} onValueChange={setSelectedMina}>
-          <SelectTrigger className="w-[200px] bg-card border-border/50 hover:border-primary/50 transition-colors">
+                <Select value={selectedZona} onValueChange={setSelectedZona}>
+          <SelectTrigger className="w-[220px] bg-card border-border/50 hover:border-primary/50 transition-colors">
             <Mountain className="h-4 w-4 mr-2 text-primary" />
-            <SelectValue placeholder="Seleccionar mina" />
+            <SelectValue placeholder="Seleccionar zona" />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
-            {minas.map((mina) => (
-              <SelectItem key={mina.id} value={mina.id}>
-                {mina.name}
+            {zonasOperacion.map((zona) => (
+              <SelectItem key={zona.id} value={zona.id}>
+                {zona.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -204,13 +219,13 @@ export function Topbar({ sidebarCollapsed = false }: TopbarProps) {
               <Avatar className="h-8 w-8 border border-primary/20">
                 <AvatarImage src="/avatar.png" />
                 <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                  OP
+                  {userData?.name?.substring(0, 2).toUpperCase() || "OP"}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden md:flex flex-col items-start">
-                <span className="text-sm font-medium">Operador</span>
+                <span className="text-sm font-medium">{userData?.name || "Operador"}</span>
                 <span className="text-xs text-muted-foreground">
-                  operador@mina.cl
+                  {userData?.email || "usuario@minapoderosa.com.pe"}
                 </span>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />

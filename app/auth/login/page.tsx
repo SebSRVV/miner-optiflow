@@ -81,9 +81,9 @@ function LoginFormContent() {
               <Shield className="h-7 w-7 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Iniciar Sesion</CardTitle>
+          <CardTitle className="text-2xl font-bold">SafetyOps Center</CardTitle>
           <CardDescription>
-            Ingresa tus credenciales para acceder al sistema
+            Mina Poderosa - Ingresa tus credenciales
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,7 +104,7 @@ function LoginFormContent() {
               <Input
                 id="email"
                 type="email"
-                placeholder="operador@mina.cl"
+                placeholder="usuario@minapoderosa.com.pe"
                 {...register("email")}
                 className={`bg-background border-border/50 focus:border-primary/50 ${
                   errors.email ? "border-destructive" : ""

@@ -18,56 +18,57 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-// Mock data for demonstration
+// Datos de Mina Poderosa - La Libertad, Peru
 const incidentesData = [
-  { fecha: "01 Nov", incidentes: 2 },
-  { fecha: "05 Nov", incidentes: 4 },
-  { fecha: "10 Nov", incidentes: 1 },
-  { fecha: "15 Nov", incidentes: 3 },
-  { fecha: "20 Nov", incidentes: 5 },
-  { fecha: "25 Nov", incidentes: 2 },
-  { fecha: "30 Nov", incidentes: 1 },
+  { fecha: "01 Nov", incidentes: 1 },
+  { fecha: "05 Nov", incidentes: 2 },
+  { fecha: "10 Nov", incidentes: 0 },
+  { fecha: "15 Nov", incidentes: 1 },
+  { fecha: "20 Nov", incidentes: 3 },
+  { fecha: "25 Nov", incidentes: 1 },
+  { fecha: "30 Nov", incidentes: 0 },
 ];
 
 const alarmasCategoria = [
-  { categoria: "Velocidad", cantidad: 45 },
-  { categoria: "Proximidad", cantidad: 32 },
-  { categoria: "Zona Rest.", cantidad: 18 },
-  { categoria: "Fatiga", cantidad: 12 },
-  { categoria: "Colisión", cantidad: 8 },
+  { categoria: "Velocidad", cantidad: 38 },
+  { categoria: "Proximidad", cantidad: 25 },
+  { categoria: "Gases", cantidad: 15 },
+  { categoria: "Fatiga", cantidad: 10 },
+  { categoria: "Ventilacion", cantidad: 7 },
 ];
 
+// Coordenadas aproximadas de Mina Poderosa, La Libertad, Peru
 const mapMarkers = [
   {
     id: "1",
-    position: [-23.6509, -70.3975] as [number, number],
+    position: [-8.0833, -77.5833] as [number, number],
     type: "semaforo" as const,
-    name: "Semáforo Principal",
+    name: "Semaforo Rampa Principal",
     status: "active" as const,
-    details: "Estado: Verde | Modo: Automático",
+    details: "Estado: Verde | Nivel 2000",
   },
   {
     id: "2",
-    position: [-23.6529, -70.3955] as [number, number],
+    position: [-8.0843, -77.5823] as [number, number],
     type: "vehiculo" as const,
-    name: "CAM-001",
+    name: "SC-003",
     status: "active" as const,
-    details: "Velocidad: 25 km/h | Operador: J. Pérez",
+    details: "Velocidad: 18 km/h | Op: C. Mendoza",
   },
   {
     id: "3",
-    position: [-23.6489, -70.3995] as [number, number],
+    position: [-8.0823, -77.5843] as [number, number],
     type: "lugar" as const,
-    name: "Zona de Carga",
-    details: "Área de operación activa",
+    name: "Estacion de Carguio",
+    details: "Nivel 1800 - Zona activa",
   },
   {
     id: "4",
-    position: [-23.6549, -70.3935] as [number, number],
+    position: [-8.0853, -77.5813] as [number, number],
     type: "alarma" as const,
     name: "Alerta Activa",
     status: "critical" as const,
-    details: "Velocidad excesiva detectada",
+    details: "Proximidad detectada en cruce",
   },
 ];
 
@@ -76,21 +77,21 @@ const ultimosIncidentes = [
     id: 1,
     tipo: "Cuasi accidente",
     severidad: "media",
-    descripcion: "Vehículo CAM-003 frenó bruscamente",
+    descripcion: "Scooptram SC-005 freno de emergencia en Nivel 1800",
     tiempo: "Hace 2 horas",
   },
   {
     id: 2,
     tipo: "Falla equipo",
     severidad: "baja",
-    descripcion: "Sensor GPS-012 desconectado",
+    descripcion: "Sensor de gases GAS-015 requiere calibracion",
     tiempo: "Hace 4 horas",
   },
   {
     id: 3,
-    tipo: "Incidente ambiental",
+    tipo: "Incidente menor",
     severidad: "alta",
-    descripcion: "Derrame menor de combustible",
+    descripcion: "Desprendimiento de roca en Galeria 4",
     tiempo: "Hace 6 horas",
   },
 ];
@@ -100,30 +101,30 @@ const ultimasAlarmas = [
     id: 1,
     tipo: "Velocidad",
     severidad: "critica",
-    mensaje: "CAM-001 excede límite en Zona A",
+    mensaje: "SC-003 excede limite en Rampa Principal",
     tiempo: "Hace 5 min",
   },
   {
     id: 2,
     tipo: "Proximidad",
     severidad: "alta",
-    mensaje: "Vehículos muy cerca en cruce 3",
+    mensaje: "Vehiculos cercanos en Cruce Nivel 2000",
     tiempo: "Hace 15 min",
   },
   {
     id: 3,
-    tipo: "Zona restringida",
+    tipo: "Ventilacion",
     severidad: "media",
-    mensaje: "EXC-002 cerca de área prohibida",
+    mensaje: "Flujo bajo en Galeria 3",
     tiempo: "Hace 30 min",
   },
 ];
 
 const actividadSensores = [
-  { id: 1, sensor: "GPS-001", tipo: "Ubicación", valor: "Actualizado", tiempo: "Hace 1 min" },
-  { id: 2, sensor: "VEL-003", tipo: "Velocidad", valor: "28 km/h", tiempo: "Hace 2 min" },
-  { id: 3, sensor: "PROX-002", tipo: "Proximidad", valor: "15m", tiempo: "Hace 3 min" },
-  { id: 4, sensor: "SEM-001", tipo: "Semáforo", valor: "Verde", tiempo: "Hace 5 min" },
+  { id: 1, sensor: "GPS-001", tipo: "Ubicacion", valor: "Nivel 2000", tiempo: "Hace 1 min" },
+  { id: 2, sensor: "VEL-003", tipo: "Velocidad", valor: "18 km/h", tiempo: "Hace 2 min" },
+  { id: 3, sensor: "GAS-008", tipo: "CO2", valor: "0.03%", tiempo: "Hace 3 min" },
+  { id: 4, sensor: "SEM-001", tipo: "Semaforo", valor: "Verde", tiempo: "Hace 5 min" },
 ];
 
 const getSeverityColor = (severidad: string) => {
@@ -150,9 +151,9 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard - SafetyOps Center</h1>
         <p className="text-muted-foreground mt-1">
-          Vista general del sistema de prevención de incidentes
+          Mina Poderosa - La Libertad, Peru | Centro de Control de Seguridad
         </p>
       </motion.div>
 
@@ -177,16 +178,16 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Flota Activa"
-          value="24/30"
-          description="80% de la flota operativa"
+          value="18/22"
+          description="82% de la flota operativa"
           icon={Truck}
           variant="success"
           delay={0.2}
         />
         <StatCard
           title="Trabajadores en Turno"
-          value={156}
-          description="Turno A - Día"
+          value={285}
+          description="Guardia A - Turno Dia"
           icon={Users}
           variant="info"
           delay={0.3}

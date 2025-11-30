@@ -14,11 +14,14 @@ export default function AuthLayout({
               <Shield className="h-12 w-12 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            EscudoMinero
+          <h1 className="text-4xl font-bold text-foreground mb-2">
+            SafetyOps Center
           </h1>
+          <p className="text-xl text-primary mb-4">
+            Mina Poderosa S.A.
+          </p>
           <p className="text-lg text-muted-foreground mb-8">
-            Sistema de Prevencion de Incidentes en Faenas Mineras
+            Centro de Control de Seguridad - La Libertad, Peru
           </p>
           <div className="grid grid-cols-2 gap-4 text-left">
             <div className="p-4 rounded-lg bg-card/50 border border-border/30">
@@ -26,16 +29,16 @@ export default function AuthLayout({
               <p className="text-sm text-muted-foreground">Monitoreo continuo</p>
             </div>
             <div className="p-4 rounded-lg bg-card/50 border border-border/30">
-              <p className="text-2xl font-bold text-emerald-400">-40%</p>
+              <p className="text-2xl font-bold text-emerald-400">-45%</p>
               <p className="text-sm text-muted-foreground">Reduccion incidentes</p>
             </div>
             <div className="p-4 rounded-lg bg-card/50 border border-border/30">
-              <p className="text-2xl font-bold text-blue-400">+500</p>
+              <p className="text-2xl font-bold text-blue-400">120+</p>
               <p className="text-sm text-muted-foreground">Dispositivos IoT</p>
             </div>
             <div className="p-4 rounded-lg bg-card/50 border border-border/30">
-              <p className="text-2xl font-bold text-yellow-400">3</p>
-              <p className="text-sm text-muted-foreground">Faenas activas</p>
+              <p className="text-2xl font-bold text-yellow-400">850</p>
+              <p className="text-sm text-muted-foreground">Trabajadores</p>
             </div>
           </div>
         </div>
