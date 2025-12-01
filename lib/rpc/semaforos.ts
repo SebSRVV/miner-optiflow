@@ -78,3 +78,24 @@ export async function cambiarEstadoSemaforo(id: number, estado: EstadoSemaforo) 
   if (error) throw error;
   return data as Semaforo;
 }
+
+// Crear nuevo semáforo
+export async function crearSemaforo(semaforo: {
+  codigo: string;
+  nombre: string;
+  id_lugar?: number;
+  estado_actual?: EstadoSemaforo;
+}): Promise<Semaforo> {
+  const { data, error } = await supabase
+    .from("semaforos")
+    .insert({
+      codigo: semaforo.codigo,
+      nombre: semaforo.nombre,
+      id_lugar: semaforo.id_lugar || null,
+      estado_actual: semaforo.estado_actual || "verde",
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Semaforo;
+}

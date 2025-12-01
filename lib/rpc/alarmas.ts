@@ -68,3 +68,25 @@ export async function crearUmbral(umbral: {
   if (error) throw error;
   return data as UmbralAlarma;
 }
+
+// Crear alarma disparada directamente
+export async function crearAlarma(alarma: {
+  id_mina: number;
+  severidad: SeveridadAlarma;
+  mensaje: string;
+  valor_detectado?: number;
+}): Promise<AlarmaDisparada> {
+  const { data, error } = await supabase
+    .from("alarmas_disparadas")
+    .insert({
+      id_mina: alarma.id_mina,
+      severidad: alarma.severidad,
+      mensaje: alarma.mensaje,
+      valor_detectado: alarma.valor_detectado || null,
+      ts_inicio: new Date().toISOString(),
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as AlarmaDisparada;
+}

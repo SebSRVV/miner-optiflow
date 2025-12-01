@@ -36,9 +36,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useMinas, useSemaforos } from "@/hooks/use-dashboard";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useMinas, useSemaforos, useCrearSemaforo } from "@/hooks/use-dashboard";
 import { useToast } from "@/hooks/use-toast";
 import { Mountain } from "lucide-react";
+import { EstadoSemaforo } from "@/lib/rpc/semaforos";
 
 const getEstadoIndicator = (estado: string) => {
   switch (estado) {
@@ -85,10 +96,17 @@ const getEstadoIndicator = (estado: string) => {
 export default function SemaforosPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMina, setSelectedMina] = useState<number | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    codigo: "",
+    nombre: "",
+    estado_actual: "verde" as EstadoSemaforo,
+  });
 
   const { toast } = useToast();
   const { data: minas } = useMinas();
   const { data: semaforos, isLoading, error, refetch, isFetching } = useSemaforos();
+  const crearSemaforoMutation = useCrearSemaforo();
 
   // Auto-select first mina
   if (!selectedMina && minas && minas.length > 0) {
@@ -96,6 +114,37 @@ export default function SemaforosPage() {
   }
 
   const minaActual = minas?.find((m) => m.id_mina === selectedMina);
+
+  const handleCreateSemaforo = async () => {
+    if (!formData.codigo || !formData.nombre) {
+      toast({
+        title: "Error",
+        description: "Completa todos los campos requeridos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await crearSemaforoMutation.mutateAsync({
+        codigo: formData.codigo,
+        nombre: formData.nombre,
+        estado_actual: formData.estado_actual,
+      });
+      toast({
+        title: "Semáforo creado",
+        description: "El semáforo se ha registrado correctamente",
+      });
+      setIsCreateDialogOpen(false);
+      setFormData({ codigo: "", nombre: "", estado_actual: "verde" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo crear el semáforo",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredSemaforos = (semaforos || []).filter(
     (semaforo) =>
@@ -199,6 +248,77 @@ export default function SemaforosPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
             Actualizar
           </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Semáforo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card border-border">
+              <DialogHeader>
+                <DialogTitle>Crear Nuevo Semáforo</DialogTitle>
+                <DialogDescription>
+                  Registra un nuevo semáforo en el sistema
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="codigo">Código *</Label>
+                  <Input
+                    id="codigo"
+                    placeholder="Ej: SEM-001"
+                    value={formData.codigo}
+                    onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                    className="bg-background border-border/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nombre">Nombre *</Label>
+                  <Input
+                    id="nombre"
+                    placeholder="Ej: Semáforo Cruce Principal"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                    className="bg-background border-border/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="estado">Estado Inicial</Label>
+                  <Select
+                    value={formData.estado_actual}
+                    onValueChange={(v) => setFormData({ ...formData, estado_actual: v as EstadoSemaforo })}
+                  >
+                    <SelectTrigger className="bg-background border-border/50">
+                      <SelectValue placeholder="Seleccionar estado" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="verde">Verde</SelectItem>
+                      <SelectItem value="amarillo">Amarillo</SelectItem>
+                      <SelectItem value="rojo">Rojo</SelectItem>
+                      <SelectItem value="intermitente">Intermitente</SelectItem>
+                      <SelectItem value="apagado">Apagado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleCreateSemaforo} disabled={crearSemaforoMutation.isPending}>
+                  {crearSemaforoMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creando...
+                    </>
+                  ) : (
+                    "Crear Semáforo"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </motion.div>
 

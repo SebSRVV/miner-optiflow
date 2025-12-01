@@ -12,12 +12,15 @@ import {
   RefreshCw,
   Loader2,
   Mountain,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -25,6 +28,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -34,8 +46,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatCard } from "@/components/cards/stat-card";
-import { useMinas, useAlarmas } from "@/hooks/use-dashboard";
+import { useMinas, useAlarmas, useCrearAlarma } from "@/hooks/use-dashboard";
 import { useToast } from "@/hooks/use-toast";
+import { SeveridadAlarma } from "@/lib/rpc/alarmas";
 
 const getSeverityColor = (severidad: string) => {
   switch (severidad) {
@@ -71,10 +84,17 @@ export default function AlarmasPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMina, setSelectedMina] = useState<number | null>(null);
   const [filterSeveridad, setFilterSeveridad] = useState<string>("all");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    severidad: "" as SeveridadAlarma,
+    mensaje: "",
+    valor_detectado: "",
+  });
 
   const { toast } = useToast();
   const { data: minas, isLoading: loadingMinas } = useMinas();
   const { data: alarmas, isLoading: loadingAlarmas, refetch, isFetching } = useAlarmas(selectedMina);
+  const crearAlarmaMutation = useCrearAlarma();
 
   // Auto-select first mina
   if (!selectedMina && minas && minas.length > 0) {
@@ -100,6 +120,38 @@ export default function AlarmasPage() {
       title: "Actualizando",
       description: "Cargando alarmas desde Supabase...",
     });
+  };
+
+  const handleCreateAlarma = async () => {
+    if (!selectedMina || !formData.severidad || !formData.mensaje) {
+      toast({
+        title: "Error",
+        description: "Completa todos los campos requeridos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await crearAlarmaMutation.mutateAsync({
+        id_mina: selectedMina,
+        severidad: formData.severidad,
+        mensaje: formData.mensaje,
+        valor_detectado: formData.valor_detectado ? parseFloat(formData.valor_detectado) : undefined,
+      });
+      toast({
+        title: "Alarma creada",
+        description: "La alarma se ha registrado correctamente",
+      });
+      setIsCreateDialogOpen(false);
+      setFormData({ severidad: "" as SeveridadAlarma, mensaje: "", valor_detectado: "" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo crear la alarma",
+        variant: "destructive",
+      });
+    }
   };
 
   const minaActual = minas?.find((m) => m.id_mina === selectedMina);
@@ -160,6 +212,77 @@ export default function AlarmasPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
             Actualizar
           </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90" disabled={!selectedMina}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nueva Alarma
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card border-border">
+              <DialogHeader>
+                <DialogTitle>Registrar Nueva Alarma</DialogTitle>
+                <DialogDescription>
+                  Crea una nueva alarma para la mina {minaActual?.nombre}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="severidad">Severidad *</Label>
+                  <Select
+                    value={formData.severidad}
+                    onValueChange={(v) => setFormData({ ...formData, severidad: v as SeveridadAlarma })}
+                  >
+                    <SelectTrigger className="bg-background border-border/50">
+                      <SelectValue placeholder="Seleccionar severidad" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="baja">Baja</SelectItem>
+                      <SelectItem value="media">Media</SelectItem>
+                      <SelectItem value="alta">Alta</SelectItem>
+                      <SelectItem value="critica">Crítica</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="mensaje">Mensaje *</Label>
+                  <Textarea
+                    id="mensaje"
+                    placeholder="Descripción de la alarma..."
+                    value={formData.mensaje}
+                    onChange={(e) => setFormData({ ...formData, mensaje: e.target.value })}
+                    className="bg-background border-border/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="valor">Valor Detectado (opcional)</Label>
+                  <Input
+                    id="valor"
+                    type="number"
+                    placeholder="Ej: 85.5"
+                    value={formData.valor_detectado}
+                    onChange={(e) => setFormData({ ...formData, valor_detectado: e.target.value })}
+                    className="bg-background border-border/50"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleCreateAlarma} disabled={crearAlarmaMutation.isPending}>
+                  {crearAlarmaMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creando...
+                    </>
+                  ) : (
+                    "Crear Alarma"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </motion.div>
 

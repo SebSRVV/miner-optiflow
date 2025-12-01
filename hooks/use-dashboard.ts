@@ -10,11 +10,11 @@ import {
   IncidentesPorDia,
   AlarmasPorSeveridad,
 } from "@/lib/rpc/metrics";
-import { listarAlarmasPorMina, AlarmaDisparada } from "@/lib/rpc/alarmas";
+import { listarAlarmasPorMina, crearAlarma, AlarmaDisparada, SeveridadAlarma } from "@/lib/rpc/alarmas";
 import { listarMinas, crearMina, actualizarMina, eliminarMina, Mina } from "@/lib/rpc/minas";
 import { listarFlota, crearFlota, actualizarFlota, eliminarFlota, Flota, ClaseFlota, FamiliaFlota } from "@/lib/rpc/flota";
 import { listarDispositivos, crearDispositivo, actualizarDispositivo, eliminarDispositivo, DispositivoListado, TipoDispositivo } from "@/lib/rpc/dispositivos";
-import { listarSemaforos, Semaforo } from "@/lib/rpc/semaforos";
+import { listarSemaforos, crearSemaforo, Semaforo, EstadoSemaforo } from "@/lib/rpc/semaforos";
 import { listarTrabajadores, crearTrabajador, actualizarTrabajador, eliminarTrabajador, Trabajador } from "@/lib/rpc/trabajadores";
 import { listarIncidentes, crearIncidente, Incidente, ClasificacionIncidente } from "@/lib/rpc/incidentes";
 
@@ -103,6 +103,21 @@ export function useAlarmas(idMina: number | null) {
     queryFn: () => listarAlarmasPorMina(idMina!),
     enabled: !!idMina,
     refetchInterval: 15000,
+  });
+}
+
+export function useCrearAlarma() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (alarma: {
+      id_mina: number;
+      severidad: SeveridadAlarma;
+      mensaje: string;
+      valor_detectado?: number;
+    }) => crearAlarma(alarma),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["alarmas"] });
+    },
   });
 }
 
@@ -205,6 +220,21 @@ export function useSemaforos() {
     queryKey: ["semaforos"],
     queryFn: listarSemaforos,
     staleTime: 30000,
+  });
+}
+
+export function useCrearSemaforo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (semaforo: {
+      codigo: string;
+      nombre: string;
+      id_lugar?: number;
+      estado_actual?: EstadoSemaforo;
+    }) => crearSemaforo(semaforo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["semaforos"] });
+    },
   });
 }
 
