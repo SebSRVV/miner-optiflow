@@ -2,16 +2,25 @@
 
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, RotateCcw, AlertTriangle, CheckCircle, XCircle, Truck, TrafficCone, Users } from "lucide-react";
+import { Play, RotateCcw, AlertTriangle, CheckCircle, XCircle, Truck, TrafficCone, Users, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type SimulationState = "idle" | "running" | "success" | "accident";
 type SemaforoState = "rojo" | "amarillo" | "verde";
 type ScenarioType = "single-success" | "single-accident" | "dual-success" | "dual-accident";
+type ZonaType = "nivel-2000" | "rampa-principal" | "nivel-1800" | "cruce-pataz";
+
+const zonas = [
+  { id: "nivel-2000", nombre: "Nivel 2000 - Santa Maria", descripcion: "Galeria principal de extraccion" },
+  { id: "rampa-principal", nombre: "Rampa Principal", descripcion: "Acceso vehicular a niveles inferiores" },
+  { id: "nivel-1800", nombre: "Nivel 1800 - Pataz", descripcion: "Zona de desarrollo activo" },
+  { id: "cruce-pataz", nombre: "Cruce Nivel Pataz", descripcion: "Interseccion de galerias" },
+];
 
 interface VehicleState {
   x: number;
@@ -22,8 +31,11 @@ interface VehicleState {
 }
 
 export default function SimulacionPage() {
+  const [selectedZona, setSelectedZona] = useState<ZonaType>("nivel-2000");
   const [scenarioType, setScenarioType] = useState<ScenarioType>("single-success");
   const [simulationState, setSimulationState] = useState<SimulationState>("idle");
+  
+  const zonaActual = zonas.find(z => z.id === selectedZona);
   const [vehicle1, setVehicle1] = useState<VehicleState>({ x: 0, y: 48, rotation: 0, speed: 0, visible: true });
   const [vehicle2, setVehicle2] = useState<VehicleState>({ x: 100, y: 52, rotation: 180, speed: 0, visible: true });
   const [semaforo1, setSemaforo1] = useState<SemaforoState>("rojo");
@@ -217,7 +229,22 @@ export default function SimulacionPage() {
             <h1 className="text-3xl font-bold">Simulacion de Seguridad</h1>
             <p className="text-muted-foreground mt-1">Mina Poderosa - Control de Trafico en Tuneles</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
+            <Select value={selectedZona} onValueChange={(v) => { setSelectedZona(v as ZonaType); resetSimulation(); }}>
+              <SelectTrigger className="w-[240px] bg-card border-border/50">
+                <MapPin className="h-4 w-4 mr-2 text-primary" />
+                <SelectValue placeholder="Seleccionar zona" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {zonas.map((zona) => (
+                  <SelectItem key={zona.id} value={zona.id}>
+                    <div className="flex flex-col">
+                      <span>{zona.nombre}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button onClick={startSimulation} disabled={simulationState === "running"} className="bg-emerald-600 hover:bg-emerald-700">
               <Play className="h-4 w-4 mr-2" />Iniciar
             </Button>
@@ -248,66 +275,264 @@ export default function SimulacionPage() {
           <CardHeader className="border-b border-border/50 py-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <TrafficCone className="h-5 w-5 text-primary" />
-              {isDualMode ? "Cruce de Tuneles - Nivel 2000" : "Rampa Principal - Entrada Nivel 2000"}
+              {zonaActual?.nombre || "Zona de Simulacion"} - {isDualMode ? "Cruce de Vehiculos" : "Paso Simple"}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="relative h-[480px] overflow-hidden bg-slate-900">
-              {/* Fondo de tunel */}
-              <div className="absolute inset-0 bg-gradient-to-b from-slate-800 via-stone-800 to-stone-900" />
               
-              {/* Textura de roca */}
-              <svg className="absolute inset-0 w-full h-full opacity-20">
-                <pattern id="rock" width="60" height="60" patternUnits="userSpaceOnUse">
-                  <circle cx="10" cy="10" r="3" fill="#78716c" />
-                  <circle cx="40" cy="25" r="4" fill="#57534e" />
-                  <circle cx="25" cy="45" r="2" fill="#a8a29e" />
-                  <circle cx="50" cy="50" r="3" fill="#78716c" />
-                </pattern>
-                <rect width="100%" height="100%" fill="url(#rock)" />
-              </svg>
+              {/* ========== ZONA: NIVEL 2000 - GALERIA INTERNA ========== */}
+              {selectedZona === "nivel-2000" && (
+                <>
+                  {/* Fondo de galeria subterranea */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-stone-900 via-stone-800 to-stone-950" />
+                  
+                  {/* Textura de roca */}
+                  <svg className="absolute inset-0 w-full h-full opacity-30">
+                    <pattern id="rock-gallery" width="40" height="40" patternUnits="userSpaceOnUse">
+                      <circle cx="8" cy="8" r="2" fill="#78716c" />
+                      <circle cx="28" cy="18" r="3" fill="#57534e" />
+                      <circle cx="18" cy="32" r="2" fill="#a8a29e" />
+                      <rect x="5" y="25" width="8" height="4" fill="#44403c" rx="1" />
+                    </pattern>
+                    <rect width="100%" height="100%" fill="url(#rock-gallery)" />
+                  </svg>
 
-              {/* Paredes del tunel */}
-              <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-stone-950 via-stone-900 to-transparent">
-                <div className="absolute right-0 top-0 bottom-0 w-2 bg-yellow-500/30" />
-              </div>
-              <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-stone-950 via-stone-900 to-transparent">
-                <div className="absolute left-0 top-0 bottom-0 w-2 bg-yellow-500/30" />
-              </div>
+                  {/* Paredes de roca con soportes de madera */}
+                  <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-stone-950 via-amber-950/40 to-transparent">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="absolute w-4 bg-amber-800 border-r-2 border-amber-900" style={{ left: "16px", top: `${i * 60}px`, height: "50px" }} />
+                    ))}
+                  </div>
+                  <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-stone-950 via-amber-950/40 to-transparent">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="absolute w-4 bg-amber-800 border-l-2 border-amber-900" style={{ right: "16px", top: `${i * 60}px`, height: "50px" }} />
+                    ))}
+                  </div>
 
-              {/* Techo del tunel */}
-              <div className="absolute top-0 left-20 right-20 h-16 bg-gradient-to-b from-stone-950 to-transparent">
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-stone-700" />
-              </div>
+                  {/* Techo con vigas */}
+                  <div className="absolute top-0 left-24 right-24 h-20 bg-gradient-to-b from-stone-950 to-transparent">
+                    {[...Array(10)].map((_, i) => (
+                      <div key={i} className="absolute h-3 bg-amber-900/80 rounded" style={{ left: `${i * 11}%`, top: "12px", width: "8%" }} />
+                    ))}
+                  </div>
 
-              {/* Luces del tunel */}
-              {[...Array(6)].map((_, i) => (
-                <motion.div key={i} className="absolute top-8" style={{ left: `${15 + i * 14}%` }}
-                  animate={{ opacity: [0.6, 1, 0.6] }} transition={{ repeat: Infinity, duration: 2, delay: i * 0.3 }}>
-                  <div className="w-3 h-3 bg-yellow-400 rounded-full shadow-[0_0_20px_10px_rgba(250,204,21,0.4)]" />
-                </motion.div>
-              ))}
+                  {/* Luces de galeria (lamparas mineras) */}
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div key={i} className="absolute top-6" style={{ left: `${18 + i * 16}%` }}
+                      animate={{ opacity: [0.5, 0.9, 0.5] }} transition={{ repeat: Infinity, duration: 3, delay: i * 0.5 }}>
+                      <div className="w-4 h-4 bg-orange-400 rounded-full shadow-[0_0_25px_12px_rgba(251,146,60,0.5)]" />
+                      <div className="w-1 h-6 bg-gray-600 mx-auto -mt-1" />
+                    </motion.div>
+                  ))}
 
-              {/* Pista/Carretera */}
-              <div className="absolute left-20 right-20 top-[42%] h-20 bg-gradient-to-b from-gray-700 via-gray-600 to-gray-700">
-                <div className="absolute inset-x-0 top-0 h-1 bg-white/40" />
-                <div className="absolute inset-x-0 bottom-0 h-1 bg-white/40" />
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 flex gap-6 px-4">
-                  {[...Array(20)].map((_, i) => (<div key={i} className="w-8 h-full bg-yellow-400/70" />))}
-                </div>
-              </div>
+                  {/* Rieles de tren minero */}
+                  <div className="absolute left-24 right-24 top-[44%] h-16">
+                    <div className="absolute inset-x-0 top-2 h-2 bg-gray-700 rounded" />
+                    <div className="absolute inset-x-0 bottom-2 h-2 bg-gray-700 rounded" />
+                    {[...Array(25)].map((_, i) => (
+                      <div key={i} className="absolute w-2 h-full bg-amber-800/60" style={{ left: `${i * 4}%` }} />
+                    ))}
+                  </div>
 
-              {/* Barranco inferior (zona de peligro) */}
-              <div className="absolute left-20 right-20 bottom-0 h-28 bg-gradient-to-t from-red-950/80 via-stone-900 to-transparent">
-                <div className="absolute top-4 left-0 right-0 h-1 bg-red-500/50" />
-                <div className="absolute top-6 left-4 right-4 text-center">
-                  <span className="text-red-400/60 text-xs font-bold tracking-widest">ZONA DE PELIGRO - BARRANCO</span>
-                </div>
-                {[...Array(12)].map((_, i) => (
-                  <div key={i} className="absolute bg-stone-800 rounded" 
-                    style={{ left: `${5 + i * 8}%`, top: `${30 + (i % 3) * 15}%`, width: "25px", height: "12px", transform: `rotate(${-10 + i * 3}deg)` }} />
-                ))}
-              </div>
+                  {/* Piso de galeria */}
+                  <div className="absolute left-24 right-24 bottom-0 h-32 bg-gradient-to-t from-stone-800 via-stone-700/50 to-transparent">
+                    <div className="absolute top-4 left-4 right-4 text-center">
+                      <span className="text-amber-500/50 text-xs font-bold tracking-widest">GALERIA SANTA MARIA - NIVEL 2000</span>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ========== ZONA: RAMPA PRINCIPAL - EXTERIOR CON BARRANCO ========== */}
+              {selectedZona === "rampa-principal" && (
+                <>
+                  {/* Cielo de montaña */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-slate-700 via-slate-800 to-stone-900" />
+                  
+                  {/* Montañas de fondo */}
+                  <svg className="absolute inset-0 w-full h-full">
+                    <polygon points="0,200 80,80 160,180 240,60 320,150 400,100 480,170 560,90 640,160 720,120 800,200 800,0 0,0" fill="#374151" opacity="0.6" />
+                    <polygon points="0,220 100,140 200,200 300,120 400,180 500,100 600,160 700,130 800,220 800,0 0,0" fill="#1f2937" opacity="0.4" />
+                  </svg>
+
+                  {/* Paredes de roca natural */}
+                  <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-stone-800 to-transparent">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="absolute bg-stone-700 rounded-lg" style={{ left: "4px", top: `${20 + i * 70}px`, width: "40px", height: "50px" }} />
+                    ))}
+                  </div>
+
+                  {/* Carretera de montaña */}
+                  <div className="absolute left-16 right-16 top-[40%] h-24 bg-gradient-to-b from-gray-600 via-gray-500 to-gray-600 rounded-sm">
+                    <div className="absolute inset-x-0 top-0 h-2 bg-white/30" />
+                    <div className="absolute inset-x-0 bottom-0 h-2 bg-white/30" />
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 flex gap-8 px-4">
+                      {[...Array(18)].map((_, i) => (<div key={i} className="w-10 h-full bg-yellow-400/80" />))}
+                    </div>
+                  </div>
+
+                  {/* Barranco profundo */}
+                  <div className="absolute left-16 right-16 bottom-0 h-36 bg-gradient-to-t from-red-950 via-stone-900 to-transparent">
+                    <div className="absolute top-2 left-0 right-0 h-2 bg-red-600/40 rounded" />
+                    <div className="absolute top-8 left-4 right-4 text-center">
+                      <span className="text-red-400/70 text-sm font-bold tracking-widest">⚠ BARRANCO - 200m PROFUNDIDAD ⚠</span>
+                    </div>
+                    {[...Array(15)].map((_, i) => (
+                      <div key={i} className="absolute bg-stone-800 rounded-sm" 
+                        style={{ left: `${3 + i * 6.5}%`, top: `${35 + (i % 4) * 12}%`, width: "30px", height: "15px", transform: `rotate(${-15 + i * 4}deg)` }} />
+                    ))}
+                    {/* Rocas cayendo */}
+                    <motion.div className="absolute left-[30%] top-[50%] w-3 h-3 bg-stone-600 rounded"
+                      animate={{ y: [0, 40, 0], opacity: [1, 0.5, 1] }} transition={{ repeat: Infinity, duration: 4 }} />
+                  </div>
+
+                  {/* Señales de peligro */}
+                  <div className="absolute right-20 top-[32%] w-8 h-8 bg-yellow-500 rotate-45 flex items-center justify-center">
+                    <span className="text-black font-bold text-lg -rotate-45">!</span>
+                  </div>
+                </>
+              )}
+
+              {/* ========== ZONA: NIVEL 1800 - TUNEL ESTRECHO ========== */}
+              {selectedZona === "nivel-1800" && (
+                <>
+                  {/* Fondo de tunel oscuro */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-stone-900 to-gray-950" />
+                  
+                  {/* Textura de roca humeda */}
+                  <svg className="absolute inset-0 w-full h-full opacity-25">
+                    <pattern id="wet-rock" width="50" height="50" patternUnits="userSpaceOnUse">
+                      <circle cx="10" cy="10" r="2" fill="#64748b" />
+                      <circle cx="35" cy="20" r="3" fill="#475569" />
+                      <circle cx="20" cy="40" r="2" fill="#94a3b8" />
+                      <line x1="5" y1="30" x2="15" y2="35" stroke="#0ea5e9" strokeWidth="1" opacity="0.3" />
+                    </pattern>
+                    <rect width="100%" height="100%" fill="url(#wet-rock)" />
+                  </svg>
+
+                  {/* Paredes estrechas con goteo */}
+                  <div className="absolute left-0 top-0 bottom-0 w-28 bg-gradient-to-r from-gray-950 via-slate-900 to-transparent">
+                    <div className="absolute right-2 top-0 bottom-0 w-1 bg-cyan-500/20" />
+                    {[...Array(5)].map((_, i) => (
+                      <motion.div key={i} className="absolute w-1 bg-cyan-400/40 rounded-full" 
+                        style={{ right: "8px", top: `${i * 100}px` }}
+                        animate={{ height: [0, 30, 0], opacity: [0, 0.6, 0] }} 
+                        transition={{ repeat: Infinity, duration: 3, delay: i * 0.6 }} />
+                    ))}
+                  </div>
+                  <div className="absolute right-0 top-0 bottom-0 w-28 bg-gradient-to-l from-gray-950 via-slate-900 to-transparent">
+                    <div className="absolute left-2 top-0 bottom-0 w-1 bg-cyan-500/20" />
+                  </div>
+
+                  {/* Techo bajo con refuerzos metalicos */}
+                  <div className="absolute top-0 left-28 right-28 h-24 bg-gradient-to-b from-gray-950 to-transparent">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="absolute h-2 bg-gray-600 rounded" style={{ left: `${i * 13}%`, top: "18px", width: "10%" }}>
+                        <div className="absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-700" />
+                      </div>
+                    ))}
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700" />
+                  </div>
+
+                  {/* Luces de emergencia */}
+                  {[...Array(4)].map((_, i) => (
+                    <motion.div key={i} className="absolute top-10" style={{ left: `${22 + i * 18}%` }}
+                      animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.3 }}>
+                      <div className="w-3 h-3 bg-red-500 rounded-full shadow-[0_0_15px_8px_rgba(239,68,68,0.4)]" />
+                    </motion.div>
+                  ))}
+
+                  {/* Pista angosta */}
+                  <div className="absolute left-28 right-28 top-[44%] h-16 bg-gradient-to-b from-gray-700 via-gray-600 to-gray-700">
+                    <div className="absolute inset-x-0 top-0 h-1 bg-yellow-500/50" />
+                    <div className="absolute inset-x-0 bottom-0 h-1 bg-yellow-500/50" />
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 flex gap-5 px-2">
+                      {[...Array(22)].map((_, i) => (<div key={i} className="w-6 h-full bg-white/60" />))}
+                    </div>
+                  </div>
+
+                  {/* Piso con charcos */}
+                  <div className="absolute left-28 right-28 bottom-0 h-28 bg-gradient-to-t from-slate-900 to-transparent">
+                    <div className="absolute top-6 left-4 right-4 text-center">
+                      <span className="text-cyan-400/50 text-xs font-bold tracking-widest">TUNEL PATAZ - NIVEL 1800 - PRECAUCION HUMEDAD</span>
+                    </div>
+                    {[...Array(6)].map((_, i) => (
+                      <motion.div key={i} className="absolute bg-cyan-900/30 rounded-full"
+                        style={{ left: `${10 + i * 15}%`, top: `${50 + (i % 2) * 20}%`, width: "40px", height: "15px" }}
+                        animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ repeat: Infinity, duration: 2, delay: i * 0.4 }} />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* ========== ZONA: CRUCE PATAZ - INTERSECCION ========== */}
+              {selectedZona === "cruce-pataz" && (
+                <>
+                  {/* Fondo de cruce amplio */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-stone-800 via-stone-700 to-stone-900" />
+                  
+                  {/* Textura de concreto */}
+                  <svg className="absolute inset-0 w-full h-full opacity-15">
+                    <pattern id="concrete" width="30" height="30" patternUnits="userSpaceOnUse">
+                      <rect width="30" height="30" fill="#57534e" />
+                      <rect x="0" y="0" width="15" height="15" fill="#78716c" />
+                      <rect x="15" y="15" width="15" height="15" fill="#78716c" />
+                    </pattern>
+                    <rect width="100%" height="100%" fill="url(#concrete)" />
+                  </svg>
+
+                  {/* Estructura de cruce con pilares */}
+                  <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-stone-900 to-transparent">
+                    <div className="absolute right-0 top-[20%] w-6 h-[60%] bg-gray-600 rounded-r" />
+                  </div>
+                  <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-stone-900 to-transparent">
+                    <div className="absolute left-0 top-[20%] w-6 h-[60%] bg-gray-600 rounded-l" />
+                  </div>
+
+                  {/* Techo con ventilacion */}
+                  <div className="absolute top-0 left-20 right-20 h-16 bg-gradient-to-b from-stone-900 to-transparent">
+                    <div className="absolute bottom-2 left-[45%] w-[10%] h-6 bg-gray-700 rounded">
+                      <motion.div className="absolute inset-1 bg-gray-600 rounded"
+                        animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-1 h-full bg-gray-500" />
+                          <div className="absolute w-full h-1 bg-gray-500" />
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
+
+                  {/* Luces fluorescentes */}
+                  {[...Array(6)].map((_, i) => (
+                    <motion.div key={i} className="absolute top-4" style={{ left: `${15 + i * 14}%` }}
+                      animate={{ opacity: [0.8, 1, 0.8] }} transition={{ repeat: Infinity, duration: 0.1 }}>
+                      <div className="w-12 h-2 bg-white rounded shadow-[0_0_20px_10px_rgba(255,255,255,0.3)]" />
+                    </motion.div>
+                  ))}
+
+                  {/* Cruce de caminos (X) */}
+                  <div className="absolute left-20 right-20 top-[38%] h-28 bg-gray-600">
+                    {/* Lineas del cruce */}
+                    <div className="absolute inset-0 border-4 border-dashed border-yellow-500/60" />
+                    <div className="absolute top-1/2 left-0 right-0 h-1 bg-yellow-400/70" />
+                    <div className="absolute top-0 bottom-0 left-1/2 w-1 bg-yellow-400/70" />
+                    {/* Marcas de PARE */}
+                    <div className="absolute top-2 left-[20%] text-white/60 text-xs font-bold">PARE</div>
+                    <div className="absolute bottom-2 right-[20%] text-white/60 text-xs font-bold">PARE</div>
+                  </div>
+
+                  {/* Señalizacion del cruce */}
+                  <div className="absolute left-20 right-20 bottom-0 h-24 bg-gradient-to-t from-stone-800 to-transparent">
+                    <div className="absolute top-4 left-4 right-4 text-center">
+                      <span className="text-yellow-400/60 text-xs font-bold tracking-widest">CRUCE PRINCIPAL - CEDA EL PASO - SEMAFORO ACTIVO</span>
+                    </div>
+                    {/* Flechas direccionales */}
+                    <div className="absolute bottom-4 left-[25%] text-emerald-400/50 text-2xl">→</div>
+                    <div className="absolute bottom-4 right-[25%] text-emerald-400/50 text-2xl">←</div>
+                  </div>
+                </>
+              )}
 
               {/* Semaforo 1 (izquierda) */}
               <motion.div className="absolute left-[35%] top-[28%] flex flex-col items-center z-10"
@@ -511,6 +736,21 @@ export default function SimulacionPage() {
               }`}>
                 {simulationState === "idle" ? "Esperando" : simulationState === "running" ? "En curso" : simulationState === "success" ? "Exitoso" : "Accidente"}
               </Badge>
+            </CardContent>
+          </Card>
+          <Card className="bg-card border-border/50">
+            <CardHeader className="pb-2"><CardTitle className="text-base">Zona Activa</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">{zonaActual?.nombre}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{zonaActual?.descripcion}</p>
+                <div className="pt-2 border-t border-border/30">
+                  <p className="text-[10px] text-muted-foreground">Mina Poderosa - La Libertad, Peru</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
           <Card className="bg-card border-border/50">

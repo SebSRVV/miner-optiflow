@@ -10,7 +10,7 @@ import {
   Mountain,
   Truck,
   Cpu,
-  TrafficCone,
+  CircleDot,
   AlertTriangle,
   FileWarning,
   BarChart3,
@@ -20,6 +20,7 @@ import {
   Users,
   Settings,
   LogOut,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -60,7 +61,7 @@ const navigation = [
   {
     name: "Semaforos",
     href: "/semaforos",
-    icon: TrafficCone,
+    icon: CircleDot,
   },
   {
     name: "Alarmas",
@@ -80,7 +81,7 @@ const navigation = [
   {
     name: "Simulacion",
     href: "/simulacion",
-    icon: TrafficCone,
+    icon: Play,
   },
 ];
 
