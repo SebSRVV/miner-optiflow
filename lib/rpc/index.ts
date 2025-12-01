@@ -4,4 +4,5 @@ export * from "./dispositivos";
 export * from "./alarmas";
 export * from "./incidentes";
 export * from "./semaforos";
-export * from "./dashboard";
+export * from "./trabajadores";
+export * from "./metrics";

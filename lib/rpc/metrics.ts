@@ -1,115 +1,65 @@
 import { supabase } from "@/lib/supabase/client";
 
-export interface KPIGlobal {
+// Interfaces para metricas
+export interface DashboardResumen {
   incidentes_hoy: number;
-  incidentes_mes: number;
-  alarmas_criticas_hoy: number;
-  alarmas_activas: number;
+  alarmas_criticas: number;
   flota_activa: number;
-  flota_total: number;
   trabajadores_turno: number;
-  dispositivos_activos: number;
-  dispositivos_total: number;
 }
 
-export interface ComparativaMinas {
-  mina_id: string;
-  mina_nombre: string;
-  incidentes: number;
-  alarmas: number;
-  flota_activa: number;
-  trabajadores: number;
-}
-
-export interface UnidadConMasIncidentes {
-  unidad_id: string;
-  unidad_codigo: string;
-  tipo: string;
-  mina_nombre: string;
-  total_incidentes: number;
-}
-
-export interface ZonaPeligrosa {
-  lugar_id: string;
-  lugar_nombre: string;
-  mina_id: string;
-  latitud: number;
-  longitud: number;
-  nivel_riesgo: number;
-  incidentes_count: number;
-  alarmas_count: number;
-}
-
-export async function obtenerKPIsGlobales(minaId?: string) {
-  const { data, error } = await supabase.rpc("rpc_kpis_globales", {
-    p_mina_id: minaId,
+// RPC: rpc_dashboard_resumen(p_id_mina) - Resumen del dashboard
+export async function obtenerDashboardResumen(idMina: number): Promise<DashboardResumen> {
+  const { data, error } = await supabase.rpc("rpc_dashboard_resumen", {
+    p_id_mina: idMina,
   });
   if (error) throw error;
-  return data as KPIGlobal;
-}
-
-export async function obtenerComparativaMinas() {
-  const { data, error } = await supabase.rpc("rpc_comparativa_minas");
-  if (error) throw error;
-  return data as ComparativaMinas[];
-}
-
-export async function obtenerTop5UnidadesIncidentes(minaId?: string) {
-  const { data, error } = await supabase.rpc("rpc_top_unidades_incidentes", {
-    p_mina_id: minaId,
-    p_limite: 5,
-  });
-  if (error) throw error;
-  return data as UnidadConMasIncidentes[];
-}
-
-export async function obtenerZonasPeligrosas(minaId: string) {
-  const { data, error } = await supabase.rpc("rpc_zonas_peligrosas", {
-    p_mina_id: minaId,
-  });
-  if (error) throw error;
-  return data as ZonaPeligrosa[];
-}
-
-export async function obtenerTendenciaIncidentes(minaId?: string, dias: number = 30) {
-  const { data, error } = await supabase.rpc("rpc_tendencia_incidentes", {
-    p_mina_id: minaId,
-    p_dias: dias,
-  });
-  if (error) throw error;
-  return data as { fecha: string; cantidad: number }[];
-}
-
-export async function obtenerDistribucionAlarmas(minaId?: string) {
-  const { data, error } = await supabase.rpc("rpc_distribucion_alarmas", {
-    p_mina_id: minaId,
-  });
-  if (error) throw error;
-  return data as { tipo: string; cantidad: number; porcentaje: number }[];
-}
-
-export async function obtenerEstadisticasFlota(minaId?: string) {
-  const { data, error } = await supabase.rpc("rpc_estadisticas_flota", {
-    p_mina_id: minaId,
-  });
-  if (error) throw error;
-  return data as {
-    por_tipo: { tipo: string; cantidad: number }[];
-    por_estado: { estado: string; cantidad: number }[];
+  
+  if (data && data.length > 0) {
+    return data[0] as DashboardResumen;
+  }
+  
+  return {
+    incidentes_hoy: 0,
+    alarmas_criticas: 0,
+    flota_activa: 0,
+    trabajadores_turno: 0,
   };
 }
 
-export async function obtenerActividadReciente(minaId?: string, limite: number = 10) {
-  const { data, error } = await supabase.rpc("rpc_actividad_reciente", {
-    p_mina_id: minaId,
-    p_limite: limite,
-  });
+// Consultas directas para metricas adicionales
+export async function contarFlotaPorMina(idMina: number): Promise<number> {
+  const { count, error } = await supabase
+    .from("asignaciones_flota_mina")
+    .select("*", { count: "exact", head: true })
+    .eq("id_mina", idMina)
+    .eq("activo", true);
   if (error) throw error;
-  return data as {
-    tipo: "incidente" | "alarma" | "dispositivo" | "semaforo";
-    titulo: string;
-    descripcion: string;
-    severidad?: string;
-    created_at: string;
-  }[];
+  return count || 0;
+}
+
+export async function contarDispositivosActivos(): Promise<number> {
+  const { count, error } = await supabase
+    .from("dispositivos_iot")
+    .select("*", { count: "exact", head: true });
+  if (error) throw error;
+  return count || 0;
+}
+
+export async function contarTrabajadores(): Promise<number> {
+  const { count, error } = await supabase
+    .from("trabajadores")
+    .select("*", { count: "exact", head: true });
+  if (error) throw error;
+  return count || 0;
+}
+
+export async function contarAlarmasActivasPorMina(idMina: number): Promise<number> {
+  const { count, error } = await supabase
+    .from("alarmas_disparadas")
+    .select("*", { count: "exact", head: true })
+    .eq("id_mina", idMina)
+    .is("ts_fin", null);
+  if (error) throw error;
+  return count || 0;
 }

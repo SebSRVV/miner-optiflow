@@ -6,22 +6,21 @@ import {
   Users,
   Plus,
   Search,
-  Filter,
   MoreVertical,
   Eye,
   Edit,
   Trash2,
-  Mail,
-  Phone,
-  Shield,
   Loader2,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,13 +37,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -52,85 +44,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-// Mock data
-const trabajadoresData = [
-  {
-    id: "1",
-    nombre: "Juan Pérez",
-    rut: "12.345.678-9",
-    email: "jperez@mina.cl",
-    telefono: "+56 9 1234 5678",
-    cargo: "Operador de Camión",
-    mina: "Mina Norte",
-    turno: "A",
-    estado: "en_turno",
-    unidadAsignada: "CAM-001",
-  },
-  {
-    id: "2",
-    nombre: "María González",
-    rut: "13.456.789-0",
-    email: "mgonzalez@mina.cl",
-    telefono: "+56 9 2345 6789",
-    cargo: "Operador de Camión",
-    mina: "Mina Norte",
-    turno: "A",
-    estado: "en_turno",
-    unidadAsignada: "CAM-002",
-  },
-  {
-    id: "3",
-    nombre: "Roberto Silva",
-    rut: "14.567.890-1",
-    email: "rsilva@mina.cl",
-    telefono: "+56 9 3456 7890",
-    cargo: "Operador de Cargador",
-    mina: "Mina Sur",
-    turno: "B",
-    estado: "disponible",
-    unidadAsignada: null,
-  },
-  {
-    id: "4",
-    nombre: "Ana Torres",
-    rut: "15.678.901-2",
-    email: "atorres@mina.cl",
-    telefono: "+56 9 4567 8901",
-    cargo: "Supervisor",
-    mina: "Mina Norte",
-    turno: "A",
-    estado: "en_turno",
-    unidadAsignada: "VEH-001",
-  },
-  {
-    id: "5",
-    nombre: "Carlos Muñoz",
-    rut: "16.789.012-3",
-    email: "cmunoz@mina.cl",
-    telefono: "+56 9 5678 9012",
-    cargo: "Operador de Perforadora",
-    mina: "Mina Sur",
-    turno: "A",
-    estado: "descanso",
-    unidadAsignada: null,
-  },
-];
-
-const getEstadoBadge = (estado: string) => {
-  switch (estado) {
-    case "en_turno":
-      return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">En Turno</Badge>;
-    case "disponible":
-      return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Disponible</Badge>;
-    case "descanso":
-      return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Descanso</Badge>;
-    case "licencia":
-      return <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">Licencia</Badge>;
-    default:
-      return <Badge variant="outline">{estado}</Badge>;
-  }
-};
+import { useTrabajadores, useCrearTrabajador } from "@/hooks/use-dashboard";
+import { useToast } from "@/hooks/use-toast";
 
 const getInitials = (nombre: string) => {
   return nombre
@@ -143,27 +58,103 @@ const getInitials = (nombre: string) => {
 
 export default function TrabajadoresPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterMina, setFilterMina] = useState<string>("all");
-  const [filterEstado, setFilterEstado] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const filteredTrabajadores = trabajadoresData.filter((trabajador) => {
-    const matchesSearch =
-      trabajador.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trabajador.rut.includes(searchQuery) ||
-      trabajador.cargo.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesMina = filterMina === "all" || trabajador.mina === filterMina;
-    const matchesEstado = filterEstado === "all" || trabajador.estado === filterEstado;
-    return matchesSearch && matchesMina && matchesEstado;
+  const [formData, setFormData] = useState({
+    nombre: "",
+    doc: "",
+    cargo: "",
+    empresa: "",
   });
 
+  const { toast } = useToast();
+  const { data: trabajadores, isLoading, error, refetch, isFetching } = useTrabajadores();
+  const crearTrabajadorMutation = useCrearTrabajador();
+
+  const filteredTrabajadores = (trabajadores || []).filter((trabajador) =>
+    trabajador.nombre_completo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    trabajador.doc_identidad?.includes(searchQuery) ||
+    trabajador.cargo?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const handleCreateTrabajador = async () => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    setIsCreateDialogOpen(false);
+    if (!formData.nombre || !formData.doc) {
+      toast({
+        title: "Error",
+        description: "Nombre y documento son requeridos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await crearTrabajadorMutation.mutateAsync(formData);
+      toast({
+        title: "Trabajador creado",
+        description: `${formData.nombre} ha sido registrado exitosamente`,
+      });
+      setIsCreateDialogOpen(false);
+      setFormData({ nombre: "", doc: "", cargo: "", empresa: "" });
+    } catch (err) {
+      toast({
+        title: "Error al crear trabajador",
+        description: err instanceof Error ? err.message : "Error desconocido",
+        variant: "destructive",
+      });
+    }
   };
+
+  const handleRefresh = () => {
+    refetch();
+    toast({
+      title: "Actualizando",
+      description: "Cargando trabajadores desde Supabase...",
+    });
+  };
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <Skeleton className="h-8 w-40 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-40" />
+        </div>
+        <Skeleton className="h-10 w-64" />
+        <Card className="bg-card border-border/50">
+          <CardContent className="p-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center gap-4 py-3">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
+        <AlertCircle className="h-16 w-16 text-destructive" />
+        <h2 className="text-xl font-semibold">Error al cargar trabajadores</h2>
+        <p className="text-muted-foreground text-center max-w-md">
+          {error.message || "No se pudo conectar con Supabase"}
+        </p>
+        <Button onClick={() => refetch()} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Reintentar
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -177,254 +168,218 @@ export default function TrabajadoresPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Trabajadores</h1>
           <p className="text-muted-foreground mt-1">
-            Gestión del personal de las faenas mineras
+            Personal registrado ({trabajadores?.length || 0})
           </p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Trabajador
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-card border-border max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Registrar Nuevo Trabajador</DialogTitle>
-              <DialogDescription>
-                Ingresa los datos del trabajador
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="nombre">Nombre Completo</Label>
-                <Input
-                  id="nombre"
-                  placeholder="Juan Pérez"
-                  className="bg-background border-border/50"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isFetching}
+            className="border-border/50"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
+            Actualizar
+          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Trabajador
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card border-border max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Registrar Nuevo Trabajador</DialogTitle>
+                <DialogDescription>
+                  Los datos se guardarán en Supabase
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="rut">RUT</Label>
+                  <Label htmlFor="nombre">Nombre Completo *</Label>
                   <Input
-                    id="rut"
-                    placeholder="12.345.678-9"
+                    id="nombre"
+                    placeholder="Carlos Mendoza Torres"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                    className="bg-background border-border/50"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="doc">Documento de Identidad *</Label>
+                  <Input
+                    id="doc"
+                    placeholder="12345678"
+                    value={formData.doc}
+                    onChange={(e) => setFormData({ ...formData, doc: e.target.value })}
                     className="bg-background border-border/50"
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="cargo">Cargo</Label>
-                  <Select>
-                    <SelectTrigger className="bg-background border-border/50">
-                      <SelectValue placeholder="Seleccionar" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      <SelectItem value="operador_camion">Operador de Camión</SelectItem>
-                      <SelectItem value="operador_excavadora">Operador de Excavadora</SelectItem>
-                      <SelectItem value="operador_cargador">Operador de Cargador</SelectItem>
-                      <SelectItem value="supervisor">Supervisor</SelectItem>
-                      <SelectItem value="mecanico">Mecánico</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="email@mina.cl"
+                    id="cargo"
+                    placeholder="Operador de Scooptram"
+                    value={formData.cargo}
+                    onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
                     className="bg-background border-border/50"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="telefono">Teléfono</Label>
+                  <Label htmlFor="empresa">Empresa Contratista</Label>
                   <Input
-                    id="telefono"
-                    placeholder="+56 9 1234 5678"
+                    id="empresa"
+                    placeholder="Servicios Mineros S.A."
+                    value={formData.empresa}
+                    onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
                     className="bg-background border-border/50"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="mina">Mina</Label>
-                  <Select>
-                    <SelectTrigger className="bg-background border-border/50">
-                      <SelectValue placeholder="Seleccionar" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      <SelectItem value="1">Mina Norte</SelectItem>
-                      <SelectItem value="2">Mina Sur</SelectItem>
-                      <SelectItem value="3">Mina Central</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="turno">Turno</Label>
-                  <Select>
-                    <SelectTrigger className="bg-background border-border/50">
-                      <SelectValue placeholder="Seleccionar" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      <SelectItem value="A">Turno A (Día)</SelectItem>
-                      <SelectItem value="B">Turno B (Noche)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleCreateTrabajador}
-                disabled={isLoading}
-                className="bg-primary text-primary-foreground"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creando...
-                  </>
-                ) : (
-                  "Crear Trabajador"
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleCreateTrabajador}
+                  disabled={crearTrabajadorMutation.isPending}
+                  className="bg-primary text-primary-foreground"
+                >
+                  {crearTrabajadorMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    "Crear Trabajador"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </motion.div>
 
-      {/* Filters */}
+      {/* Search */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
-        className="flex flex-col sm:flex-row gap-4"
       >
-        <div className="relative flex-1 max-w-md">
+        <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar por nombre, RUT, cargo..."
+            placeholder="Buscar por nombre, documento, cargo..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-card border-border/50"
           />
         </div>
-        <Select value={filterMina} onValueChange={setFilterMina}>
-          <SelectTrigger className="w-[180px] bg-card border-border/50">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Mina" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border">
-            <SelectItem value="all">Todas las minas</SelectItem>
-            <SelectItem value="Mina Norte">Mina Norte</SelectItem>
-            <SelectItem value="Mina Sur">Mina Sur</SelectItem>
-            <SelectItem value="Mina Central">Mina Central</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filterEstado} onValueChange={setFilterEstado}>
-          <SelectTrigger className="w-[180px] bg-card border-border/50">
-            <SelectValue placeholder="Estado" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border">
-            <SelectItem value="all">Todos los estados</SelectItem>
-            <SelectItem value="en_turno">En Turno</SelectItem>
-            <SelectItem value="disponible">Disponible</SelectItem>
-            <SelectItem value="descanso">Descanso</SelectItem>
-            <SelectItem value="licencia">Licencia</SelectItem>
-          </SelectContent>
-        </Select>
       </motion.div>
 
+      {/* Empty state */}
+      {filteredTrabajadores.length === 0 && (
+        <div className="flex flex-col items-center justify-center h-[40vh] space-y-4">
+          <Users className="h-16 w-16 text-muted-foreground/50" />
+          <h2 className="text-xl font-semibold">No hay trabajadores registrados</h2>
+          <p className="text-muted-foreground text-center max-w-md">
+            {searchQuery
+              ? "No se encontraron trabajadores con ese criterio"
+              : "Registra tu primer trabajador para comenzar"}
+          </p>
+          {!searchQuery && (
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Registrar Primer Trabajador
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-      >
-        <Card className="bg-card border-border/50">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border/50">
-                  <TableHead>Trabajador</TableHead>
-                  <TableHead>RUT</TableHead>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead>Mina</TableHead>
-                  <TableHead>Turno</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Unidad</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTrabajadores.map((trabajador) => (
-                  <TableRow key={trabajador.id} className="border-border/50">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 border border-primary/20">
-                          <AvatarImage src="" />
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                            {getInitials(trabajador.nombre)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{trabajador.nombre}</p>
-                          <p className="text-xs text-muted-foreground">{trabajador.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{trabajador.rut}</TableCell>
-                    <TableCell>{trabajador.cargo}</TableCell>
-                    <TableCell>{trabajador.mina}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">Turno {trabajador.turno}</Badge>
-                    </TableCell>
-                    <TableCell>{getEstadoBadge(trabajador.estado)}</TableCell>
-                    <TableCell>
-                      {trabajador.unidadAsignada ? (
-                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                          {trabajador.unidadAsignada}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-card border-border">
-                          <DropdownMenuItem>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver detalles
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Eliminar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+      {filteredTrabajadores.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <Card className="bg-card border-border/50">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/50">
+                    <TableHead>Trabajador</TableHead>
+                    <TableHead>Documento</TableHead>
+                    <TableHead>Cargo</TableHead>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </motion.div>
+                </TableHeader>
+                <TableBody>
+                  {filteredTrabajadores.map((trabajador) => (
+                    <TableRow key={trabajador.id_trabajador} className="border-border/50">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9 border border-primary/20">
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                              {getInitials(trabajador.nombre_completo)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <p className="font-medium">{trabajador.nombre_completo}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {trabajador.doc_identidad || "-"}
+                      </TableCell>
+                      <TableCell>{trabajador.cargo || "-"}</TableCell>
+                      <TableCell>
+                        {trabajador.empresa_contratista ? (
+                          <Badge variant="outline">{trabajador.empresa_contratista}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">Directo</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-card border-border">
+                            <DropdownMenuItem>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Ver detalles
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Fetching indicator */}
+      {isFetching && !isLoading && (
+        <div className="fixed bottom-4 right-4 bg-card border border-border rounded-lg px-4 py-2 shadow-lg flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          <span className="text-sm">Actualizando...</span>
+        </div>
+      )}
     </div>
   );
 }
