@@ -69,76 +69,6 @@ SafetyOps Center es una plataforma integral para el monitoreo, control y prevenc
 | **Lucide Icons** | Iconografía |
 | **Recharts** | Gráficos y visualizaciones |
 
-## 🚀 Instalación
-
-### Prerrequisitos
-- Node.js 18+
-- npm o pnpm
-- Cuenta en Supabase
-
-### Pasos
-
-1. **Clonar el repositorio**
-```bash
-git clone https://github.com/SebSRVV/saftyopscenter.git
-cd saftyopscenter
-```
-
-2. **Instalar dependencias**
-```bash
-npm install
-```
-
-3. **Configurar variables de entorno**
-```bash
-cp .env.example .env.local
-```
-
-Editar `.env.local` con tus credenciales de Supabase:
-```env
-NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
-```
-
-4. **Ejecutar en desarrollo**
-```bash
-npm run dev
-```
-
-5. **Abrir en el navegador**
-```
-http://localhost:3000
-```
-
-## 📁 Estructura del Proyecto
-
-```
-├── app/                    # App Router de Next.js
-│   ├── (auth)/            # Rutas de autenticación
-│   ├── (dashboard)/       # Layout del dashboard
-│   ├── alarmas/           # Gestión de alarmas
-│   ├── dashboard/         # Panel principal
-│   ├── dispositivos/      # Dispositivos IoT
-│   ├── flota/             # Control de flota
-│   ├── incidentes/        # Registro de incidentes
-│   ├── metrics/           # Métricas y KPIs
-│   ├── minas/             # Gestión de minas
-│   ├── semaforos/         # Sistema de semáforos
-│   ├── simulacion/        # Simulador interactivo
-│   └── trabajadores/      # Gestión de personal
-├── components/            # Componentes React
-│   ├── cards/             # Tarjetas de estadísticas
-│   ├── charts/            # Gráficos
-│   ├── layout/            # Sidebar, Topbar
-│   ├── maps/              # Mapas
-│   └── ui/                # Componentes shadcn/ui
-├── hooks/                 # Custom hooks
-├── lib/                   # Utilidades y configuración
-│   ├── rpc/               # Funciones RPC de Supabase
-│   └── supabase/          # Cliente de Supabase
-└── public/                # Archivos estáticos
-```
-
 ## 🔐 Autenticación
 
 El sistema incluye:
@@ -154,22 +84,13 @@ La aplicación está optimizada para:
 - 📱 Tablet
 - 📲 Mobile
 
-## 🤝 Contribuir
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -m 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
 
 ## 👨‍💻 Autor
 
 **SebSRVV**
 
 - GitHub: [@SebSRVV](https://github.com/SebSRVV)
-- Proyecto: [saftyopscenter](https://github.com/SebSRVV/saftyopscenter)
+- Proyecto: [SafetyOpsCenter](https://github.com/SebSRVV/safetyopscenter))
 
 ## 📄 Licencia
 
