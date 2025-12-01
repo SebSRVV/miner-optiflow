@@ -15,7 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface LineChartProps {
   title: string;
-  data: Array<Record<string, unknown>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any[];
   lines: Array<{
     dataKey: string;
     name: string;

@@ -1,7 +1,15 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { obtenerDashboardResumen, DashboardResumen } from "@/lib/rpc/metrics";
+import { 
+  obtenerDashboardResumen, 
+  DashboardResumen,
+  obtenerIncidentesUltimos7Dias,
+  obtenerAlarmasPorSeveridad,
+  obtenerIncidentesPorClasificacion,
+  IncidentesPorDia,
+  AlarmasPorSeveridad,
+} from "@/lib/rpc/metrics";
 import { listarAlarmasPorMina, AlarmaDisparada } from "@/lib/rpc/alarmas";
 import { listarMinas, crearMina, actualizarMina, eliminarMina, Mina } from "@/lib/rpc/minas";
 import { listarFlota, crearFlota, actualizarFlota, eliminarFlota, Flota, ClaseFlota, FamiliaFlota } from "@/lib/rpc/flota";
@@ -58,6 +66,33 @@ export function useDashboardResumen(idMina: number | null) {
     queryFn: () => obtenerDashboardResumen(idMina!),
     enabled: !!idMina,
     refetchInterval: 30000,
+  });
+}
+
+export function useIncidentesHistorico(idMina: number | null) {
+  return useQuery<IncidentesPorDia[], Error>({
+    queryKey: ["incidentes-historico", idMina],
+    queryFn: () => obtenerIncidentesUltimos7Dias(idMina!),
+    enabled: !!idMina,
+    staleTime: 60000,
+  });
+}
+
+export function useAlarmasPorSeveridad(idMina: number | null) {
+  return useQuery<AlarmasPorSeveridad[], Error>({
+    queryKey: ["alarmas-severidad", idMina],
+    queryFn: () => obtenerAlarmasPorSeveridad(idMina!),
+    enabled: !!idMina,
+    staleTime: 60000,
+  });
+}
+
+export function useIncidentesPorClasificacion(idMina: number | null) {
+  return useQuery<{ clasificacion: string; cantidad: number }[], Error>({
+    queryKey: ["incidentes-clasificacion", idMina],
+    queryFn: () => obtenerIncidentesPorClasificacion(idMina!),
+    enabled: !!idMina,
+    staleTime: 60000,
   });
 }
 

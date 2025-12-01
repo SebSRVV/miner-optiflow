@@ -16,7 +16,6 @@ import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/cards/stat-card";
 import { LineChart } from "@/components/charts/line-chart";
 import { BarChart } from "@/components/charts/bar-chart";
-import { MiningMap } from "@/components/maps/mining-map";
 import {
   Select,
   SelectContent,
@@ -32,68 +31,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useMinas, useAlarmas, useFlota, useIncidentes, useDashboardResumen } from "@/hooks/use-dashboard";
+import { 
+  useMinas, 
+  useAlarmas, 
+  useFlota, 
+  useIncidentes, 
+  useDashboardResumen,
+  useTrabajadores,
+  useIncidentesHistorico,
+  useAlarmasPorSeveridad,
+} from "@/hooks/use-dashboard";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock data
-const kpisGlobales = {
-  incidentesHoy: 3,
-  incidentesMes: 24,
-  alarmasCriticasHoy: 7,
-  alarmasActivas: 12,
-  flotaActiva: 24,
-  flotaTotal: 30,
-  trabajadoresTurno: 156,
-  dispositivosActivos: 45,
-  dispositivosTotal: 52,
-};
-
-const comparativaMinas = [
-  { mina: "Mina Norte", incidentes: 12, alarmas: 45, flota: 15, trabajadores: 89 },
-  { mina: "Mina Sur", incidentes: 8, alarmas: 32, flota: 10, trabajadores: 56 },
-  { mina: "Mina Central", incidentes: 4, alarmas: 18, flota: 5, trabajadores: 23 },
-];
-
-const top5Unidades = [
-  { codigo: "CAM-003", tipo: "Camión", mina: "Mina Norte", incidentes: 5 },
-  { codigo: "EXC-001", tipo: "Excavadora", mina: "Mina Norte", incidentes: 4 },
-  { codigo: "CAM-001", tipo: "Camión", mina: "Mina Norte", incidentes: 3 },
-  { codigo: "CAR-002", tipo: "Cargador", mina: "Mina Sur", incidentes: 3 },
-  { codigo: "VEH-005", tipo: "Vehículo Liviano", mina: "Mina Sur", incidentes: 2 },
-];
-
-const tendenciaIncidentes = [
-  { mes: "Ago", cantidad: 28 },
-  { mes: "Sep", cantidad: 32 },
-  { mes: "Oct", cantidad: 25 },
-  { mes: "Nov", cantidad: 30 },
-  { mes: "Dic", cantidad: 22 },
-  { mes: "Ene", cantidad: 24 },
-];
-
-const distribucionAlarmas = [
-  { tipo: "Velocidad", cantidad: 45, porcentaje: 38 },
-  { tipo: "Proximidad", cantidad: 32, porcentaje: 27 },
-  { tipo: "Zona Rest.", cantidad: 18, porcentaje: 15 },
-  { tipo: "Fatiga", cantidad: 12, porcentaje: 10 },
-  { tipo: "Otros", cantidad: 12, porcentaje: 10 },
-];
-
-const zonasPeligrosas = [
-  { id: "1", nombre: "Cruce Principal", latitud: -23.6509, longitud: -70.3975, nivel: 85, incidentes: 8, alarmas: 23 },
-  { id: "2", nombre: "Zona de Carga A", latitud: -23.6529, longitud: -70.3955, nivel: 72, incidentes: 5, alarmas: 18 },
-  { id: "3", nombre: "Ruta Sur", latitud: -23.6549, longitud: -70.3935, nivel: 65, incidentes: 4, alarmas: 15 },
-  { id: "4", nombre: "Acceso Taller", latitud: -23.6489, longitud: -70.3995, nivel: 45, incidentes: 2, alarmas: 8 },
-];
-
-const mapMarkers = zonasPeligrosas.map((zona) => ({
-  id: zona.id,
-  position: [zona.latitud, zona.longitud] as [number, number],
-  type: "alarma" as const,
-  name: zona.nombre,
-  status: zona.nivel >= 70 ? ("critical" as const) : zona.nivel >= 50 ? ("warning" as const) : ("active" as const),
-  details: `Nivel de riesgo: ${zona.nivel}% | Incidentes: ${zona.incidentes} | Alarmas: ${zona.alarmas}`,
-}));
 
 export default function MetricsPage() {
   const [selectedMina, setSelectedMina] = useState<number | null>(null);
@@ -104,6 +52,9 @@ export default function MetricsPage() {
   const { data: flota } = useFlota(selectedMina);
   const { data: incidentes } = useIncidentes(selectedMina);
   const { data: resumen } = useDashboardResumen(selectedMina);
+  const { data: trabajadores } = useTrabajadores();
+  const { data: incidentesHistorico } = useIncidentesHistorico(selectedMina);
+  const { data: alarmasSeveridad } = useAlarmasPorSeveridad(selectedMina);
   
   // Auto-select first mina
   if (!selectedMina && minas && minas.length > 0) {
@@ -119,7 +70,38 @@ export default function MetricsPage() {
     alarmasTotal: alarmas?.length || 0,
     flotaActiva: flota?.length || 0,
     flotaTotal: flota?.length || 0,
+    trabajadores: trabajadores?.length || 0,
   };
+  
+  // Datos para gráficos con datos reales
+  const tendenciaIncidentes = incidentesHistorico || [
+    { fecha: "Lun", incidentes: 0 },
+    { fecha: "Mar", incidentes: 0 },
+    { fecha: "Mie", incidentes: 0 },
+    { fecha: "Jue", incidentes: 0 },
+    { fecha: "Vie", incidentes: 0 },
+    { fecha: "Sab", incidentes: 0 },
+    { fecha: "Dom", incidentes: 0 },
+  ];
+  
+  const distribucionAlarmas = alarmasSeveridad?.map(a => ({
+    tipo: a.severidad,
+    cantidad: a.cantidad,
+  })) || [
+    { tipo: "Critica", cantidad: 0 },
+    { tipo: "Alta", cantidad: 0 },
+    { tipo: "Media", cantidad: 0 },
+    { tipo: "Baja", cantidad: 0 },
+  ];
+  
+  // Comparativa de minas (usando datos reales de todas las minas)
+  const comparativaMinas = (minas || []).slice(0, 3).map(mina => ({
+    mina: mina.nombre,
+    incidentes: incidentes?.filter(i => i.id_mina === mina.id_mina).length || 0,
+    alarmas: alarmas?.length || 0,
+    flota: flota?.length || 0,
+    trabajadores: realKpis.trabajadores,
+  }));
   
   const handleRefresh = () => {
     refetchAlarmas();
@@ -213,14 +195,14 @@ export default function MetricsPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <LineChart
-          title="Tendencia de Incidentes (Últimos 6 meses)"
+          title="Incidentes - Últimos 7 días"
           data={tendenciaIncidentes}
-          lines={[{ dataKey: "cantidad", name: "Incidentes", color: "#fbbf24" }]}
-          xAxisKey="mes"
+          lines={[{ dataKey: "incidentes", name: "Incidentes", color: "#fbbf24" }]}
+          xAxisKey="fecha"
           delay={0.4}
         />
         <BarChart
-          title="Distribución de Alarmas por Tipo"
+          title="Alarmas por Severidad"
           data={distribucionAlarmas}
           bars={[{ dataKey: "cantidad", name: "Cantidad", color: "#ef4444" }]}
           xAxisKey="tipo"
@@ -278,9 +260,9 @@ export default function MetricsPage() {
         </Card>
       </motion.div>
 
-      {/* Heatmap and Top 5 */}
+      {/* Resumen de Datos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Heatmap de Zonas Peligrosas */}
+        {/* Últimas Alarmas */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -290,55 +272,54 @@ export default function MetricsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-red-500" />
-                Zonas de Mayor Riesgo
+                Últimas Alarmas
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {zonasPeligrosas.map((zona, index) => (
+                {(alarmas || []).slice(0, 5).map((alarma) => (
                   <div
-                    key={zona.id}
+                    key={alarma.id_alarma}
                     className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/30"
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className={`h-3 w-3 rounded-full ${
-                          zona.nivel >= 70
+                          alarma.severidad === "critica"
                             ? "bg-red-500"
-                            : zona.nivel >= 50
+                            : alarma.severidad === "alta"
+                            ? "bg-orange-500"
+                            : alarma.severidad === "media"
                             ? "bg-yellow-500"
-                            : "bg-emerald-500"
+                            : "bg-blue-500"
                         }`}
                       />
                       <div>
-                        <p className="font-medium">{zona.nombre}</p>
+                        <p className="font-medium">{alarma.mensaje || "Alarma detectada"}</p>
                         <p className="text-xs text-muted-foreground">
-                          {zona.incidentes} incidentes • {zona.alarmas} alarmas
+                          Valor: {alarma.valor_detectado ?? "N/A"}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p
-                        className={`text-lg font-bold ${
-                          zona.nivel >= 70
-                            ? "text-red-400"
-                            : zona.nivel >= 50
-                            ? "text-yellow-400"
-                            : "text-emerald-400"
-                        }`}
-                      >
-                        {zona.nivel}%
-                      </p>
-                      <p className="text-xs text-muted-foreground">Nivel de riesgo</p>
-                    </div>
+                    <Badge variant="outline" className={
+                      alarma.severidad === "critica" ? "bg-red-500/20 text-red-400 border-red-500/30" :
+                      alarma.severidad === "alta" ? "bg-orange-500/20 text-orange-400 border-orange-500/30" :
+                      alarma.severidad === "media" ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
+                      "bg-blue-500/20 text-blue-400 border-blue-500/30"
+                    }>
+                      {alarma.severidad}
+                    </Badge>
                   </div>
                 ))}
+                {(!alarmas || alarmas.length === 0) && (
+                  <p className="text-center text-muted-foreground py-4">Sin alarmas registradas</p>
+                )}
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Top 5 Unidades con más Incidentes */}
+        {/* Flota Registrada */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -348,7 +329,7 @@ export default function MetricsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Truck className="h-5 w-5 text-blue-500" />
-                Top 5 Unidades con más Incidentes
+                Flota Registrada
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -356,54 +337,37 @@ export default function MetricsPage() {
                 <TableHeader>
                   <TableRow className="border-border/50">
                     <TableHead>#</TableHead>
-                    <TableHead>Unidad</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Mina</TableHead>
-                    <TableHead className="text-right">Incidentes</TableHead>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Familia</TableHead>
+                    <TableHead>Marca</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {top5Unidades.map((unidad, index) => (
-                    <TableRow key={unidad.codigo} className="border-border/50">
+                  {(flota || []).slice(0, 5).map((unidad, index) => (
+                    <TableRow key={unidad.id_flota} className="border-border/50">
                       <TableCell>
-                        <Badge
-                          className={
-                            index === 0
-                              ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                              : index === 1
-                              ? "bg-gray-400/20 text-gray-300 border-gray-400/30"
-                              : index === 2
-                              ? "bg-orange-600/20 text-orange-400 border-orange-600/30"
-                              : "bg-muted text-muted-foreground"
-                          }
-                        >
+                        <Badge className="bg-primary/20 text-primary border-primary/30">
                           {index + 1}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-medium">{unidad.codigo}</TableCell>
-                      <TableCell className="text-muted-foreground">{unidad.tipo}</TableCell>
-                      <TableCell className="text-muted-foreground">{unidad.mina}</TableCell>
-                      <TableCell className="text-right">
-                        <span className="text-lg font-bold text-red-400">{unidad.incidentes}</span>
-                      </TableCell>
+                      <TableCell className="font-medium">{unidad.nombre}</TableCell>
+                      <TableCell className="text-muted-foreground">{unidad.familia}</TableCell>
+                      <TableCell className="text-muted-foreground">{unidad.marca || "N/A"}</TableCell>
                     </TableRow>
                   ))}
+                  {(!flota || flota.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+                        Sin flota registrada
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         </motion.div>
       </div>
-
-      {/* Map */}
-      <MiningMap
-        title="Mapa de Calor - Zonas de Riesgo"
-        center={[-23.6509, -70.3975]}
-        zoom={14}
-        markers={mapMarkers}
-        height="400px"
-        delay={1}
-      />
     </div>
   );
 }

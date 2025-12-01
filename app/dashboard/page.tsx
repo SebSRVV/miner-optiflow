@@ -21,7 +21,16 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DashboardSkeleton, ListItemSkeleton, ActivitySkeleton } from "@/components/skeletons/dashboard-skeleton";
-import { useMinas, useDashboardResumen, useAlarmas, useFlota } from "@/hooks/use-dashboard";
+import { 
+  useMinas, 
+  useDashboardResumen, 
+  useAlarmas, 
+  useFlota,
+  useIncidentesHistorico,
+  useAlarmasPorSeveridad,
+  useTrabajadores,
+  useIncidentes,
+} from "@/hooks/use-dashboard";
 
 // Coordenadas de Mina Poderosa, La Libertad, Peru
 const MINA_COORDS = { lat: -8.0833, lng: -77.5833 };
@@ -55,9 +64,39 @@ export default function DashboardPage() {
   const { data: resumen, isLoading: loadingResumen } = useDashboardResumen(activeMinaId);
   const { data: alarmas, isLoading: loadingAlarmas } = useAlarmas(activeMinaId);
   const { data: flota, isLoading: loadingFlota } = useFlota(activeMinaId);
+  const { data: incidentesHistorico } = useIncidentesHistorico(activeMinaId);
+  const { data: alarmasSeveridad } = useAlarmasPorSeveridad(activeMinaId);
+  const { data: trabajadores } = useTrabajadores();
+  const { data: incidentes } = useIncidentes(activeMinaId);
 
   const minaActual = minas?.find(m => m.id_mina === activeMinaId);
   const isLoading = loadingMinas || loadingResumen;
+  
+  // Datos para gráficos con datos reales
+  const chartIncidentes = incidentesHistorico || [
+    { fecha: "Lun", incidentes: 0 },
+    { fecha: "Mar", incidentes: 0 },
+    { fecha: "Mie", incidentes: 0 },
+    { fecha: "Jue", incidentes: 0 },
+    { fecha: "Vie", incidentes: 0 },
+    { fecha: "Sab", incidentes: 0 },
+    { fecha: "Dom", incidentes: 0 },
+  ];
+  
+  const chartAlarmas = alarmasSeveridad || [
+    { severidad: "Critica", cantidad: 0 },
+    { severidad: "Alta", cantidad: 0 },
+    { severidad: "Media", cantidad: 0 },
+    { severidad: "Baja", cantidad: 0 },
+  ];
+  
+  // Calcular totales reales
+  const totalTrabajadores = trabajadores?.length || 0;
+  const totalIncidentes = incidentes?.length || 0;
+  const incidentesHoy = incidentes?.filter(i => {
+    const hoy = new Date().toDateString();
+    return new Date(i.creado_en || "").toDateString() === hoy;
+  }).length || 0;
 
   const mapMarkers = flota?.slice(0, 5).map((f, i) => ({
     id: String(f.id_flota),
@@ -109,23 +148,23 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Incidentes Hoy"
-          value={resumen?.incidentes_hoy ?? 0}
-          description="Registrados en el dia"
+          value={incidentesHoy || resumen?.incidentes_hoy || 0}
+          description={`${totalIncidentes} total registrados`}
           icon={FileWarning}
           variant="warning"
           delay={0}
         />
         <StatCard
-          title="Alarmas Criticas"
-          value={resumen?.alarmas_criticas ?? 0}
-          description="Requieren atencion"
+          title="Alarmas Activas"
+          value={alarmas?.length || resumen?.alarmas_criticas || 0}
+          description={`${chartAlarmas.find(a => a.severidad === "Critica")?.cantidad || 0} críticas`}
           icon={AlertTriangle}
           variant="critical"
           delay={0.1}
         />
         <StatCard
           title="Flota Activa"
-          value={resumen?.flota_activa ?? 0}
+          value={flota?.length || resumen?.flota_activa || 0}
           description="Unidades operativas"
           icon={Truck}
           variant="success"
@@ -133,8 +172,8 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Trabajadores"
-          value={resumen?.trabajadores_turno ?? 0}
-          description="En turno actual"
+          value={totalTrabajadores || resumen?.trabajadores_turno || 0}
+          description="Registrados en sistema"
           icon={Users}
           variant="info"
           delay={0.3}
@@ -143,28 +182,15 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <LineChart
-          title="Incidentes - Ultimos 7 dias"
-          data={[
-            { fecha: "Lun", incidentes: resumen?.incidentes_hoy ?? 0 },
-            { fecha: "Mar", incidentes: 0 },
-            { fecha: "Mie", incidentes: 1 },
-            { fecha: "Jue", incidentes: 0 },
-            { fecha: "Vie", incidentes: 2 },
-            { fecha: "Sab", incidentes: 0 },
-            { fecha: "Dom", incidentes: 0 },
-          ]}
+          title="Incidentes - Últimos 7 días"
+          data={chartIncidentes}
           lines={[{ dataKey: "incidentes", name: "Incidentes", color: "#fbbf24" }]}
           xAxisKey="fecha"
           delay={0.4}
         />
         <BarChart
           title="Alarmas por Severidad"
-          data={[
-            { categoria: "Critica", cantidad: resumen?.alarmas_criticas ?? 0 },
-            { categoria: "Alta", cantidad: alarmasRecientes.filter(a => a.severidad === "alta").length },
-            { categoria: "Media", cantidad: alarmasRecientes.filter(a => a.severidad === "media").length },
-            { categoria: "Baja", cantidad: alarmasRecientes.filter(a => a.severidad === "baja").length },
-          ]}
+          data={chartAlarmas.map(a => ({ categoria: a.severidad, cantidad: a.cantidad }))}
           bars={[{ dataKey: "cantidad", name: "Cantidad", color: "#ef4444" }]}
           xAxisKey="categoria"
           colorByValue
